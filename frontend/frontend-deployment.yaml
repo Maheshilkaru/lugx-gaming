@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: IMAGE_PLACEHOLDER  # <-- placeholder will be replaced at build time
+        image: lugx-frontend:latest # <-- placeholder will be replaced at build time
         ports:
         - containerPort: 80
         resources:
