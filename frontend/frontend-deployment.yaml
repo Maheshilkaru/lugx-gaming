@@ -4,7 +4,12 @@ kind: Deployment
 metadata:
   name: frontend
 spec:
-  replicas: 1
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
   selector:
     matchLabels:
       app: frontend
@@ -14,11 +19,11 @@ spec:
         app: frontend
     spec:
       containers:
-      - name: frontend
-        image: lugx-frontend:latest # <-- placeholder will be replaced at build time
-        ports:
-        - containerPort: 80
-        resources:
-          requests:
-            cpu: "100m"
-            memory: "128Mi"
+        - name: frontend
+          image: IMAGE_PLACEHOLDER  # <-- replace this with your actual image
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
