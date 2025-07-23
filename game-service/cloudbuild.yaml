@@ -13,7 +13,7 @@ steps:
     args:
       - -c
       - |
-        sed "s|IMAGE_PLACEHOLDER|gcr.io/$PROJECT_ID/SERVICE_NAME:$SHORT_SHA|g" deployment.yaml > k8s-deployment.yaml
+        sed "s|IMAGE_PLACEHOLDER|gcr.io/$PROJECT_ID/game-service:$SHORT_SHA|g" game-service-deployment.yaml > k8s-deployment.yaml
 
   # Step 4: Deploy to GKE
   - name: 'gcr.io/cloud-builders/kubectl'
@@ -22,15 +22,15 @@ steps:
       - CLOUDSDK_COMPUTE_ZONE=us-central1-c
       - CLOUDSDK_CONTAINER_CLUSTER=lugx-cluster
 
-  # Optional: Apply service.yaml if needed
+  # Optional: Apply the service file
   - name: 'gcr.io/cloud-builders/kubectl'
-    args: ['apply', '-f', 'service.yaml']
+    args: ['apply', '-f', 'game-service-service.yaml']
     env:
       - CLOUDSDK_COMPUTE_ZONE=us-central1-c
       - CLOUDSDK_CONTAINER_CLUSTER=lugx-cluster
 
 images:
-  - gcr.io/$PROJECT_ID/SERVICE_NAME:$SHORT_SHA
+  - gcr.io/$PROJECT_ID/game-service:$SHORT_SHA
 
 serviceAccount: cloudbuild-deployer@lugx-gaming-project.iam.gserviceaccount.com
 

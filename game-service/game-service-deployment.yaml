@@ -13,10 +13,18 @@ spec:
         app: game-service
     spec:
       containers:
-      - name: game-service
-        image: gcr.io/lugx-gaming-project/game-service:v1
-        ports:
-        - containerPort: 3000  # Match  service port
-        env:
-        - name: DB_HOST
-          value: "postgres-service"  # Will link to PostgreSQL later
+        - name: game-service
+          image: IMAGE_PLACEHOLDER  # Will be replaced by Cloud Build
+          ports:
+            - containerPort: 3000
+          env:
+            - name: DB_HOST
+              value: "postgres-service"
+            - name: DB_USER
+              value: "postgres"
+            - name: DB_PASSWORD
+              value: "1234"
+            - name: DB_NAME
+              value: "postgres"
+            - name: DB_PORT
+              value: "5432"
