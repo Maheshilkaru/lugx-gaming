@@ -1,57 +1,53 @@
+# -------------------------------
+# Cloud Build CI/CD Pipeline for Lugx Frontend
+# This file:
+# - Builds Docker image from frontend/
+# - Pushes to Artifact Registry
+# - Replaces placeholder image in YAML
+# - Deploys to GKE cluster
+# -------------------------------
+
 steps:
   # Step 1: Build Docker image from frontend directory
   - name: 'gcr.io/cloud-builders/docker'
     args:
       [
         'build',
-        '--no-cache', 
-        '-t', 'gcr.io/$PROJECT_ID/frontend:$SHORT_SHA',
-        '-f', 'frontend/Dockerfile',
-        'frontend'
+        '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/lugx-docker-repo/lugx-frontend:$SHORT_SHA',
+        '.'
       ]
+    dir: 'frontend'
 
-  # Step 2: Push Docker image to Google Container Registry
+  # Step 2: Push the image to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
     args:
-      ['push', 'gcr.io/$PROJECT_ID/frontend:$SHORT_SHA']
+      [
+        'push',
+        'us-central1-docker.pkg.dev/$PROJECT_ID/lugx-docker-repo/lugx-frontend:$SHORT_SHA'
+      ]
 
-  # Step 3: Debugging step - List files in frontend/ to confirm file is present
+  # Step 3: Replace IMAGE_PLACEHOLDER in deployment YAML with real image URI
   - name: 'gcr.io/cloud-builders/gcloud'
     entrypoint: bash
     args:
       - -c
       - |
-        echo "📁 Listing files in frontend/ directory:"
-        ls -al frontend
-        echo "✅ Done listing files"
+        sed "s|IMAGE_PLACEHOLDER|us-central1-docker.pkg.dev/$PROJECT_ID/lugx-docker-repo/lugx-frontend:$SHORT_SHA|" frontend/frontend-deployment.yaml > frontend/k8s-frontend-deployment.yaml
 
-  # Step 4: Replace IMAGE_PLACEHOLDER with actual image path in deployment YAML
-  - name: 'gcr.io/cloud-builders/gcloud'
-    entrypoint: bash
-    args:
-      - -c
-      - |
-        sed "s|IMAGE_PLACEHOLDER|gcr.io/$PROJECT_ID/frontend:$SHORT_SHA|g" frontend-deployment.yaml > k8s-frontend-deployment.yaml
-
-  # Step 5: Apply the deployment YAML to the Kubernetes cluster
+  # Step 4: Deploy the updated frontend-deployment.yaml to GKE
   - name: 'gcr.io/cloud-builders/kubectl'
     args: ['apply', '-f', 'frontend/k8s-frontend-deployment.yaml']
     env:
-      - 'CLOUDSDK_COMPUTE_ZONE=us-central1'
+      - 'CLOUDSDK_COMPUTE_REGION=us-central1'
       - 'CLOUDSDK_CONTAINER_CLUSTER=lugx-cluster'
 
-  # Step 6: Apply the service definition to the cluster
+  # Step 5: Apply the frontend service to expose it to the internet
   - name: 'gcr.io/cloud-builders/kubectl'
     args: ['apply', '-f', 'frontend/frontend-service.yaml']
     env:
-      - 'CLOUDSDK_COMPUTE_ZONE=us-central1'
+      - 'CLOUDSDK_COMPUTE_REGION=us-central1'
       - 'CLOUDSDK_CONTAINER_CLUSTER=lugx-cluster'
 
+# Optional: Declare image outputs (shows in GCP UI)
 images:
-  - 'gcr.io/$PROJECT_ID/frontend:$SHORT_SHA'
-
-options:
-  logging: CLOUD_LOGGING_ONLY
-
-serviceAccount: 'cloudbuild-deployer@lugx-gaming-project.iam.gserviceaccount.com'
-#Test
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/lugx-docker-repo/lugx-frontend:$SHORT_SHA'
