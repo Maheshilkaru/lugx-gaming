@@ -1,19 +1,25 @@
 steps:
   # Step 1: Build Docker image
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/game-service:$SHORT_SHA', '.']
+    args:
+      - 'build'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/lugx-docker-repo/game-service:$SHORT_SHA'
+      - '.'
 
   # Step 2: Push Docker image
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/game-service:$SHORT_SHA']
+    args:
+      - 'push'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/lugx-docker-repo/game-service:$SHORT_SHA'
 
-  # Step 3: Replace image tag in deployment file
+  # Step 3: Replace image placeholder with actual Artifact Registry image
   - name: 'gcr.io/cloud-builders/gcloud'
     entrypoint: bash
     args:
       - -c
       - |
-        sed "s|IMAGE_PLACEHOLDER|gcr.io/$PROJECT_ID/game-service:$SHORT_SHA|g" game-service-deployment.yaml > k8s-deployment.yaml
+        sed "s|IMAGE_PLACEHOLDER|us-central1-docker.pkg.dev/$PROJECT_ID/lugx-docker-repo/game-service:$SHORT_SHA|g" game-service-deployment.yaml > k8s-deployment.yaml
 
   # Step 4: Deploy to GKE
   - name: 'gcr.io/cloud-builders/kubectl'
@@ -30,7 +36,7 @@ steps:
       - CLOUDSDK_CONTAINER_CLUSTER=lugx-cluster
 
 images:
-  - gcr.io/$PROJECT_ID/game-service:$SHORT_SHA
+  - us-central1-docker.pkg.dev/$PROJECT_ID/lugx-docker-repo/game-service:$SHORT_SHA
 
 serviceAccount: cloudbuild-deployer@lugx-gaming-project.iam.gserviceaccount.com
 
