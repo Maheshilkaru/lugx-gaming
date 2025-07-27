@@ -13,24 +13,27 @@ spec:
         app: postgres
     spec:
       initContainers:
-      - name: clean-data-dir
-        image: busybox
-        command: ["sh", "-c", "rm -rf /var/lib/postgresql/data/*"]
-        volumeMounts:
-        - name: postgres-data
-          mountPath: /var/lib/postgresql/data
+        - name: clean-data-dir
+          image: busybox
+          command: ["sh", "-c", "rm -rf /var/lib/postgresql/data/*"]
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
       containers:
-      - name: postgres
-        image: postgres:15
-        env:
-        - name: POSTGRES_PASSWORD
-          value: "1234"
-        ports:
-        - containerPort: 5432
-        volumeMounts:
-        - mountPath: /var/lib/postgresql/data
-          name: postgres-data
+        - name: postgres
+          image: postgres:15
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_PASSWORD
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
       volumes:
-      - name: postgres-data
-        persistentVolumeClaim:
-          claimName: postgres-pvc
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: postgres-pvc
