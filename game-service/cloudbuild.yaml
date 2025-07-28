@@ -43,3 +43,4 @@ serviceAccount: cloudbuild-deployer@lugx-gaming-project.iam.gserviceaccount.com
 
 options:
   logging: CLOUD_LOGGING_ONLY
+  #Test
