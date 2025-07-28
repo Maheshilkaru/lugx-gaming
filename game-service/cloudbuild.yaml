@@ -1,12 +1,13 @@
 steps:
   # Step 1: Build Docker image from game-service directory
   - name: 'gcr.io/cloud-builders/docker'
-    dir: .
     args:
       - 'build'
       - '-t'
       - 'us-central1-docker.pkg.dev/$PROJECT_ID/lugx-docker-repo/game-service:$SHORT_SHA'
-      - '.'
+      - '-f'
+      - 'game-service/Dockerfile'
+      - 'game-service'
 
   # Step 2: Push Docker image
   - name: 'gcr.io/cloud-builders/docker'
@@ -20,7 +21,7 @@ steps:
     args:
       - -c
       - |
-        sed "s|IMAGE_PLACEHOLDER|us-central1-docker.pkg.dev/$PROJECT_ID/lugx-docker-repo/game-service:$SHORT_SHA|g" game-service-deployment.yaml > k8s-deployment.yaml
+        sed "s|IMAGE_PLACEHOLDER|us-central1-docker.pkg.dev/$PROJECT_ID/lugx-docker-repo/game-service:$SHORT_SHA|g" game-service/game-service-deployment.yaml > k8s-deployment.yaml
 
   # Step 4: Deploy to GKE using the generated deployment file
   - name: 'gcr.io/cloud-builders/kubectl'
@@ -31,7 +32,7 @@ steps:
 
   # Step 5 (Optional): Apply the service file
   - name: 'gcr.io/cloud-builders/kubectl'
-    args: ['apply', '-f', 'game-service-service.yaml']
+    args: ['apply', '-f', 'game-service/game-service-service.yaml']
     env:
       - CLOUDSDK_COMPUTE_ZONE=us-central1
       - CLOUDSDK_CONTAINER_CLUSTER=lugx-cluster
