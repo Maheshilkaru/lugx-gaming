@@ -14,26 +14,29 @@ spec:
     spec:
       containers:
         - name: game-service
-          image: IMAGE_PLACEHOLDER # Will be replaced by Cloud Build
+          image: IMAGE_PLACEHOLDER  # Will be replaced by Cloud Build
           ports:
             - containerPort: 3000
           env:
             - name: DB_HOST
-              value: "postgres-service"
+              valueFrom:
+                secretKeyRef:
+                  name: game-db-secret
+                  key: DB_HOST
             - name: DB_USER
               valueFrom:
                 secretKeyRef:
-                  name: postgres-secret
-                  key: POSTGRES_USER
-            - name: DB_PASSWORD
+                  name: game-db-secret
+                  key: DB_USER
+            - name: DB_PASS
               valueFrom:
                 secretKeyRef:
-                  name: postgres-secret
-                  key: POSTGRES_PASSWORD
+                  name: game-db-secret
+                  key: DB_PASS
             - name: DB_NAME
               valueFrom:
                 secretKeyRef:
-                  name: postgres-secret
-                  key: POSTGRES_DB
+                  name: game-db-secret
+                  key: DB_NAME
             - name: DB_PORT
               value: "5432"

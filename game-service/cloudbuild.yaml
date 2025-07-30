@@ -1,5 +1,5 @@
 steps:
-  # Step 1: Build Docker image from game-service directory
+  # Step 1: Build Docker image from game-service folder
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'build'
@@ -9,38 +9,49 @@ steps:
       - 'game-service/Dockerfile'
       - 'game-service'
 
-  # Step 2: Push Docker image
+  # Step 2: Push Docker image to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
       - 'us-central1-docker.pkg.dev/$PROJECT_ID/lugx-docker-repo/game-service:$SHORT_SHA'
 
-  # Step 3: Replace image placeholder with actual Artifact Registry image
+  # Step 3: Authenticate to GKE
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - 'container'
+      - 'clusters'
+      - 'get-credentials'
+      - 'lugx-cluster'
+      - '--zone'
+      - 'us-central1'
+      - '--project'
+      - '$PROJECT_ID'
+
+  # Step 4: Replace IMAGE_PLACEHOLDER and deploy Deployment
   - name: 'gcr.io/cloud-builders/gcloud'
     entrypoint: bash
     args:
       - -c
       - |
-        sed "s|IMAGE_PLACEHOLDER|us-central1-docker.pkg.dev/$PROJECT_ID/lugx-docker-repo/game-service:$SHORT_SHA|g" game-service/game-service-deployment.yaml > k8s-deployment.yaml
+        IMAGE_URI="us-central1-docker.pkg.dev/$PROJECT_ID/lugx-docker-repo/game-service:$SHORT_SHA"
+        sed "s|IMAGE_PLACEHOLDER|$IMAGE_URI|" game-service/game-service-deployment.yaml | kubectl apply -f -
 
-  # Step 4: Deploy to GKE using the generated deployment file
-  - name: 'gcr.io/cloud-builders/kubectl'
-    args: ['apply', '-f', 'k8s-deployment.yaml']
-    env:
-      - CLOUDSDK_COMPUTE_ZONE=us-central1
-      - CLOUDSDK_CONTAINER_CLUSTER=lugx-cluster
-
-  # Step 5 (Optional): Apply the service file
+  # Step 5: Apply Kubernetes Service
   - name: 'gcr.io/cloud-builders/kubectl'
     args: ['apply', '-f', 'game-service/game-service-service.yaml']
     env:
       - CLOUDSDK_COMPUTE_ZONE=us-central1
       - CLOUDSDK_CONTAINER_CLUSTER=lugx-cluster
 
-images:
-  - us-central1-docker.pkg.dev/$PROJECT_ID/lugx-docker-repo/game-service:$SHORT_SHA
+  # Step 6: (Optional) Apply database secret if needed
+  - name: 'gcr.io/cloud-builders/kubectl'
+    args: ['apply', '-f', 'game-service/game-db-secret.yaml']
+    env:
+      - CLOUDSDK_COMPUTE_ZONE=us-central1
+      - CLOUDSDK_CONTAINER_CLUSTER=lugx-cluster
 
-serviceAccount: cloudbuild-deployer@lugx-gaming-project.iam.gserviceaccount.com
+images:
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/lugx-docker-repo/game-service:$SHORT_SHA'
 
 options:
   logging: CLOUD_LOGGING_ONLY
