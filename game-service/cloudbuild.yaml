@@ -22,7 +22,7 @@ steps:
       - 'clusters'
       - 'get-credentials'
       - 'lugx-cluster'
-      - '--zone'
+      - '--region'
       - 'us-central1'
       - '--project'
       - '$PROJECT_ID'
@@ -40,14 +40,14 @@ steps:
   - name: 'gcr.io/cloud-builders/kubectl'
     args: ['apply', '-f', 'game-service/game-service-service.yaml']
     env:
-      - CLOUDSDK_COMPUTE_ZONE=us-central1
+      - CLOUDSDK_COMPUTE_REGION=us-central1
       - CLOUDSDK_CONTAINER_CLUSTER=lugx-cluster
 
-  # Step 6: (Optional) Apply database secret if needed
+  # Step 6: Apply database secret (optional)
   - name: 'gcr.io/cloud-builders/kubectl'
     args: ['apply', '-f', 'game-service/game-db-secret.yaml']
     env:
-      - CLOUDSDK_COMPUTE_ZONE=us-central1
+      - CLOUDSDK_COMPUTE_REGION=us-central1
       - CLOUDSDK_CONTAINER_CLUSTER=lugx-cluster
 
 images:
@@ -55,4 +55,3 @@ images:
 
 options:
   logging: CLOUD_LOGGING_ONLY
-  #Text111
