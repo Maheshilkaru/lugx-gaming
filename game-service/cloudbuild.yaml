@@ -15,7 +15,7 @@ steps:
       - 'push'
       - 'us-central1-docker.pkg.dev/$PROJECT_ID/lugx-docker-repo/game-service:$SHORT_SHA'
 
-  # Step 3: Authenticate to GKE
+  # Step 3: Authenticate to GKE using REGION
   - name: 'gcr.io/cloud-builders/gcloud'
     args:
       - 'container'
@@ -43,7 +43,7 @@ steps:
       - CLOUDSDK_COMPUTE_REGION=us-central1
       - CLOUDSDK_CONTAINER_CLUSTER=lugx-cluster
 
-  # Step 6: Apply database secret (optional)
+  # Step 6: (Optional) Apply database secret if needed
   - name: 'gcr.io/cloud-builders/kubectl'
     args: ['apply', '-f', 'game-service/game-db-secret.yaml']
     env:
