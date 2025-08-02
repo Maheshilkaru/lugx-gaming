@@ -1,38 +1,57 @@
 steps:
-  # Step 1: Build Docker image
+  # Step 1: Build Docker image for Order Service
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/order-service:$SHORT_SHA', '.']
+    args:
+      - 'build'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/lugx-docker-repo/order-service:$SHORT_SHA'
+      - '-f'
+      - 'order-service/Dockerfile'
+      - 'order-service'
 
-  # Step 2: Push Docker image
+  # Step 2: Push Docker image to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/order-service:$SHORT_SHA']
+    args:
+      - 'push'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/lugx-docker-repo/order-service:$SHORT_SHA'
 
-  # Step 3: Replace image tag in deployment file
+  # Step 3: Authenticate to GKE using REGION
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - 'container'
+      - 'clusters'
+      - 'get-credentials'
+      - 'lugx-cluster'
+      - '--region'
+      - 'us-central1'
+      - '--project'
+      - '$PROJECT_ID'
+
+  # Step 4: Replace IMAGE_PLACEHOLDER and deploy Order Service Deployment
   - name: 'gcr.io/cloud-builders/gcloud'
     entrypoint: bash
     args:
       - -c
       - |
-        sed "s|IMAGE_PLACEHOLDER|gcr.io/$PROJECT_ID/SERVICE_NAME:$SHORT_SHA|g" deployment.yaml > k8s-deployment.yaml
+        IMAGE_URI="us-central1-docker.pkg.dev/$PROJECT_ID/lugx-docker-repo/order-service:$SHORT_SHA"
+        sed "s|IMAGE_PLACEHOLDER|$IMAGE_URI|" order-service/order-service-deployment.yaml | kubectl apply -f -
 
-  # Step 4: Deploy to GKE
+  # Step 5: Apply Order Service Kubernetes Service (LoadBalancer)
   - name: 'gcr.io/cloud-builders/kubectl'
-    args: ['apply', '-f', 'k8s-deployment.yaml']
+    args: ['apply', '-f', 'order-service/order-service-service.yaml']
     env:
-      - CLOUDSDK_COMPUTE_ZONE=us-central1-c
+      - CLOUDSDK_COMPUTE_REGION=us-central1
       - CLOUDSDK_CONTAINER_CLUSTER=lugx-cluster
 
-  # Optional: Apply service.yaml if needed
+  # Step 6: Apply database secret for Order Service
   - name: 'gcr.io/cloud-builders/kubectl'
-    args: ['apply', '-f', 'service.yaml']
+    args: ['apply', '-f', 'order-service/order-db-secret.yaml']
     env:
-      - CLOUDSDK_COMPUTE_ZONE=us-central1-c
+      - CLOUDSDK_COMPUTE_REGION=us-central1
       - CLOUDSDK_CONTAINER_CLUSTER=lugx-cluster
 
 images:
-  - gcr.io/$PROJECT_ID/SERVICE_NAME:$SHORT_SHA
-
-serviceAccount: cloudbuild-deployer@lugx-gaming-project.iam.gserviceaccount.com
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/lugx-docker-repo/order-service:$SHORT_SHA'
 
 options:
   logging: CLOUD_LOGGING_ONLY

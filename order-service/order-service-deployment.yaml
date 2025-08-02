@@ -13,16 +13,30 @@ spec:
         app: order-service
     spec:
       containers:
-      - name: order-service
-        image: gcr.io/lugx-gaming-project/order-service:v6
-        ports:
-        - containerPort: 5000
-        env:
-        - name: NODE_ENV
-          value: "production"
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "100m"
-          limits:
-            memory: "512Mi"
+        - name: order-service
+          image: IMAGE_PLACEHOLDER  # Cloud Build will replace this
+          ports:
+            - containerPort: 3000
+          env:
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: order-db-secret
+                  key: DB_HOST
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: order-db-secret
+                  key: DB_USER
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: order-db-secret
+                  key: DB_PASS
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: order-db-secret
+                  key: DB_NAME
+            - name: DB_PORT
+              value: "5432"

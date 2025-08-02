@@ -3,10 +3,10 @@ kind: Service
 metadata:
   name: order-service
 spec:
-  type: LoadBalancer
   selector:
     app: order-service
   ports:
-    - protocol: TCP 
-      port: 5000
-      targetPort: 5000
+    - protocol: TCP
+      port: 80        # Public port
+      targetPort: 3000 # Container port
+  type: LoadBalancer
