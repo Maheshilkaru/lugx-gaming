@@ -33,8 +33,8 @@ steps:
     args:
       - -c
       - |
-        IMAGE_URI="us-central1-docker.pkg.dev/$PROJECT_ID/lugx-docker-repo/order-service:$SHORT_SHA"
-        sed "s|IMAGE_PLACEHOLDER|$IMAGE_URI|" order-service/order-service-deployment.yaml | kubectl apply -f -
+        sed "s|IMAGE_PLACEHOLDER|us-central1-docker.pkg.dev/$PROJECT_ID/lugx-docker-repo/order-service:$SHORT_SHA|" \
+        order-service/order-service-deployment.yaml | kubectl apply -f -
 
   # Step 5: Apply Order Service Kubernetes Service (LoadBalancer)
   - name: 'gcr.io/cloud-builders/kubectl'
@@ -55,4 +55,3 @@ images:
 
 options:
   logging: CLOUD_LOGGING_ONLY
-  #Test
