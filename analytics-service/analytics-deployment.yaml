@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: analytics-service
+  labels:
+    app: analytics-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: analytics-service
+  template:
+    metadata:
+      labels:
+        app: analytics-service
+    spec:
+      containers:
+        - name: analytics-service
+          image: IMAGE_PLACEHOLDER  # Cloud Build will replace
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - secretRef:
+                name: analytics-secret

@@ -1,7 +1,0 @@
-apiVersion: networking.gke.io/v1
-kind: ManagedCertificate
-metadata:
-  name: analytics-cert
-spec:
-  domains:
-    - analytics.test.com

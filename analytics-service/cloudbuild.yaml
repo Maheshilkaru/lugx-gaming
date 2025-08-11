@@ -1,0 +1,58 @@
+steps:
+# Step 1: Build Docker image for Analytics Service
+- name: 'gcr.io/cloud-builders/docker'
+  args:
+    - 'build'
+    - '-t'
+    - 'us-central1-docker.pkg.dev/$PROJECT_ID/lugx-docker-repo/analytics-service:$SHORT_SHA'
+    - '-f'
+    - 'analytics-service/Dockerfile'
+    - 'analytics-service'
+
+# Step 2: Push image to Artifact Registry
+- name: 'gcr.io/cloud-builders/docker'
+  args:
+    - 'push'
+    - 'us-central1-docker.pkg.dev/$PROJECT_ID/lugx-docker-repo/analytics-service:$SHORT_SHA'
+
+# Step 3: Authenticate to GKE (adjust region/cluster if yours differ)
+- name: 'gcr.io/cloud-builders/gcloud'
+  args:
+    - 'container'
+    - 'clusters'
+    - 'get-credentials'
+    - 'lugx-cluster'
+    - '--region'
+    - 'us-central1'
+    - '--project'
+    - '$PROJECT_ID'
+
+# Step 4: (Option A) Apply Secret from repo (only if you keep analytics-secret.yaml in Git)
+#   If you do NOT keep the secret in Git, delete this step.
+- name: 'gcr.io/cloud-builders/kubectl'
+  args: ['apply', '-f', 'analytics-service/analytics-secret.yaml']
+  env:
+    - 'CLOUDSDK_COMPUTE_REGION=us-central1'
+    - 'CLOUDSDK_CONTAINER_CLUSTER=lugx-cluster'
+
+# Step 5: Replace IMAGE_PLACEHOLDER and apply Deployment
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: bash
+  args:
+    - -c
+    - |
+      sed "s|IMAGE_PLACEHOLDER|us-central1-docker.pkg.dev/$PROJECT_ID/lugx-docker-repo/analytics-service:$SHORT_SHA|g" \
+        analytics-service/analytics-deployment.yaml | kubectl apply -f -
+
+# Step 6: Apply Service (LoadBalancer or ClusterIP)
+- name: 'gcr.io/cloud-builders/kubectl'
+  args: ['apply', '-f', 'analytics-service/analytics-service.yaml']
+  env:
+    - 'CLOUDSDK_COMPUTE_REGION=us-central1'
+    - 'CLOUDSDK_CONTAINER_CLUSTER=lugx-cluster'
+
+images:
+- 'us-central1-docker.pkg.dev/$PROJECT_ID/lugx-docker-repo/analytics-service:$SHORT_SHA'
+
+options:
+  logging: CLOUD_LOGGING_ONLY

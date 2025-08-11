@@ -1,14 +1,20 @@
+# Use lightweight Node.js image
 FROM node:18-alpine
 
+# Set working directory
 WORKDIR /app
+
+# Copy package files first for caching
 COPY package*.json ./
-RUN npm install express @clickhouse/client cors
+
+# Install production dependencies
+RUN npm install --only=production
+
+# Copy the rest of the service files
 COPY . .
 
-EXPOSE 4000
+# Expose service port
+EXPOSE 3000
 
-HEALTHCHECK --interval=30s --timeout=3s \
-  CMD curl -f http://localhost:4000/health || exit 1
-
-USER node
-CMD ["node", "server.js"]
+# Start the service
+CMD ["npm", "start"]
