@@ -430,53 +430,45 @@ https://templatemo.com/tm-589-lugx-gaming
 
 
 <script>
-const ANALYTICS_ENDPOINT = 'http://34.123.155.72:30080/track';
-const sessionId = crypto.randomUUID() || Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+const ANALYTICS_ENDPOINT = 'http://35.186.201.6/events';
 
-const track = (data) => {
-  const payload = {
-    ...data,
-    pageUrl: window.location.pathname,
-    sessionId,
-    timestamp: new Date().toISOString()
-  };
+  function getSid() {
+    if (!sessionStorage.sid) sessionStorage.sid = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random());
+    return sessionStorage.sid;
+  }
 
-  if (navigator.sendBeacon) {
-    const blob = new Blob([JSON.stringify(payload)], {type: 'application/json'});
-    navigator.sendBeacon(ANALYTICS_ENDPOINT, blob);
-  } else {
+  function track(payload) {
+    payload.timestamp = new Date().toISOString();
+    payload.session_id = payload.session_id || getSid();
+
     fetch(ANALYTICS_ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
       keepalive: true
-    }).catch(e => console.log('Analytics error:', e));
+    }).catch(() => {});
   }
-};
 
-track({ eventType: 'session_start' });
-track({ eventType: 'page_view' });
+  // Track page view
+  track({ event_type: 'page_view', page_url: location.pathname });
 
-let pageEnterTime = Date.now();
-window.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'hidden') {
-    track({
-      eventType: 'page_exit',
-      timeOnPage: (Date.now() - pageEnterTime) / 1000
-    });
-  } else {
-    pageEnterTime = Date.now();
-  }
-});
+  // Track clicks
+  document.addEventListener('click', e => {
+    const tag = (e.target && e.target.tagName) ? e.target.tagName : 'UNKNOWN';
+    track({ event_type: 'click', page_url: location.pathname, element: tag });
+  }, { passive: true });
 
-document.addEventListener('click', (e) => {
-  track({
-    eventType: 'click',
-    element: e.target.tagName.toLowerCase(),
-    x: e.clientX,
-    y: e.clientY
+  // Track scroll depth
+  let maxScroll = 0;
+  window.addEventListener('scroll', () => {
+    const d = document.documentElement;
+    const depth = (d.scrollTop / Math.max(1, d.scrollHeight - d.clientHeight)) || 0;
+    if (depth > maxScroll) maxScroll = depth;
+  }, { passive: true });
+
+  window.addEventListener('beforeunload', () => {
+    track({ event_type: 'scroll', page_url: location.pathname, scroll_depth: maxScroll });
   });
-}, { passive: true });
 </script>
 
 
