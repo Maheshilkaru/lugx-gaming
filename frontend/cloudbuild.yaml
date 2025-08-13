@@ -56,3 +56,4 @@ images:
 # ✅ Fix: Log only to Google Cloud Logging (no GCS bucket needed)
 options:
   logging: CLOUD_LOGGING_ONLY
+  #1
