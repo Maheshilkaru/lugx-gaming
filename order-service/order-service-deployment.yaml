@@ -4,6 +4,11 @@ metadata:
   name: order-service
 spec:
   replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
   selector:
     matchLabels:
       app: order-service
@@ -17,6 +22,13 @@ spec:
           image: IMAGE_PLACEHOLDER  # Cloud Build will replace this
           ports:
             - containerPort: 3000
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
           env:
             - name: DB_HOST
               valueFrom:
