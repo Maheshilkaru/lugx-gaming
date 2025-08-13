@@ -6,6 +6,11 @@ metadata:
     app: analytics-service
 spec:
   replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
   selector:
     matchLabels:
       app: analytics-service
@@ -22,3 +27,10 @@ spec:
           envFrom:
             - secretRef:
                 name: analytics-secret
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
